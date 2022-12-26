@@ -41,6 +41,11 @@ function getRandomInt(max) {
 
 // this is the main class for the mkyBanker
 class Reg2Transaction{
+  // The Reg2Transaction class appears to be a class that represents a transaction in a cryptocurrency system. It has a number of methods that are used to process and save transactions to a database.
+
+  // The constructor method is used to create an instance of the Reg2Transaction class and takes three parameters: tran, db, and sig. tran is the transaction data, db is a database connection, and sig is a signature.
+
+  // The calculateHash method calculates the hash of the transaction data and returns it. The saveTransaction method saves the transaction data to the database, if it is not already there. The getWalletPubKey method retrieves the public key for a wallet from the database using the wallet's MUID. The confirmAndSave method confirms the transaction and saves it to the database if it is valid. The isValid method checks if the transaction is valid by verifying the signature and checking if the transaction is already in the database. The verifySignature method verifies the signature of the transaction.
   constructor(tran,db,sig,bctr){
     this.tran = tran;
     this.db   = db;
@@ -245,6 +250,7 @@ class MkyTransaction {
   }
 }
 class MkyBank {
+  // """ This is the Bank Class """
   constructor(branchId,branchIp,branchNetwork,reset,resetTo=null){
     this.reset      = reset;
     this.resetBlock = resetTo;
