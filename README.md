@@ -32,6 +32,8 @@
   - [EC Private-Public Key Pairs](#ec-private-public-key-pairs)
   - [Digital Signatures](#digital-signatures)
   - [PeerTree Whitepaper](#peertree-whitepaper)
+- [Scripts and Files](#scripts-and-files)
+- [Support the Project](#support-the-project)
 
 
 ## The PeerTree Project Introduction
@@ -51,6 +53,40 @@ The peers form a tree structure where new nodes are added from left to right. Th
 To read the detailed whitepaper see [this link](whitepaper.md)
 
 The project also includes a proof-of-concept blockchain application that runs on top of the PeerTree object. We include a working demo of the project [here](https://www.bitmonky.com/whzon/bitMiner/webConsole.php?git=git).
+
+
+<!--
+# Installation
+
+## Install the PeerTree Project
+
+To install the PeerTree project, clone the repository from GitHub and install the dependencies using npm.
+
+```bash
+git clone
+cd PeerTree
+npm install
+``` -->
+
+# Scripts and Files
+
+* [addslashes.js](./scripts/addslashes.js) - This script adds slashes to a string.
+* [bitWebMoniter.js](./scripts/bitWebMoniter.js) - This script monitors the blockchain network.
+* [mkyBankDBT.js](./scripts/mkyBankDBT.js) - This script is a database table for the mkyBanker object.
+* [mkyBankGroup.js](./scripts/mkyBankGroup.js) - This script is a database table for the mkyBanker object.
+* [mkyBanker.js](./scripts/mkyBanker.js) - This script is a database table for the mkyBanker object.
+* [mkyBankerNode.js](./scripts/mkyBankerNode.js) - This script is a database table for the mkyBanker object.
+* [mkyBlock.js](./scripts/mkyBlock.js) - This script is a database table for the mkyBanker object.
+* [mkyBlockChainMgr.js](./scripts/mkyBlockChainMgr.js) - the blockchain manager.
+* [mkyBranchList.js](./scripts/mkyBranchList.js) - the branch list object.
+* [mkyMinerNode.js](./scripts/mkyMinerNode.js) - This is the miner node object.
+* [mkyNetMain.js](./scripts/mkyNetMain.js) - The main network object.
+* [mkyNetwork.js](./scripts/mkyNetwork.js) - The network object.
+* [mkyWallet.js](./scripts/mkyWallet.js) - Digital wallet object.
+* [networkWebConsole.js](./scripts/networkWebConsole.js) - A web console for the network.
+
+# Support the Project
+
 
 If you would like to support the project financially, consider
 purchasing some coins from Peter's coin store by clicking the link(s) below!
