@@ -1,24 +1,24 @@
 //const config       = require('./config.js');
-var dateFormat     = require('dateformat');
-const EventEmitter = require('events');
-const https        = require('https');
-const fs           = require('fs');
+var dateFormat     = require('dateformat'); // this is the date format library
+const EventEmitter = require('events'); // this is the event emitter library
+const https        = require('https'); // this is the https library
+const fs           = require('fs'); // this is the file system library
 const mkyPubKey    = '04a5dc8478989c0122c3eb6750c08039a91abf175c458ff5d64dbf448df8f1ba6ac4a6839e5cb0c9c711b15e85dae98f04697e4126186c4eab425064a97910dedc';
-const EC           = require('elliptic').ec;
-const ec           = new EC('secp256k1');
-const crypto       = require('crypto');
-const mysql        = require('mysql');
-const schedule     = require('node-schedule');
-const {MkyBlock}   = require('./mkyBlock');
-const {MkyWallet}  = require('./mkyWallet');
-const {BranchList} = require('./mkyBranchList.js');
-const {MkyBlockChainMgr,RegTransaction} = require('./mkyBlockChainMgr.js');
-const {MkyBankGroupMgr,MkyPeer}         = require('./mkyBankGroup.js');
-const {MkyWebConsole}                   = require('./networkWebConsole.js');
+const EC           = require('elliptic').ec; // this is the elliptic curve library
+const ec           = new EC('secp256k1'); // this is the elliptic curve we are using
+const crypto       = require('crypto'); // this is the crypto library
+const mysql        = require('mysql'); // this is the mysql library
+const schedule     = require('node-schedule'); // this is the node-schedule library
+const {MkyBlock}   = require('./mkyBlock'); // this is the mkyBlock class
+const {MkyWallet}  = require('./mkyWallet'); // this is the mkyWallet class
+const {BranchList} = require('./mkyBranchList.js'); // this is the BranchList class
+const {MkyBlockChainMgr,RegTransaction} = require('./mkyBlockChainMgr.js'); // this is the BlockChainMgr class
+const {MkyBankGroupMgr,MkyPeer}         = require('./mkyBankGroup.js'); // this is the BankGroupMgr class
+const {MkyWebConsole}                   = require('./networkWebConsole.js');  // this is the networkWebConsole class
 
-addslashes  = require ('./addslashes');
+addslashes  = require ('./addslashes'); // this is the addslashes function
 
-var con = mysql.createConnection({
+var con = mysql.createConnection({ // this is the mysql connection
   host: "localhost",
   user: "username",
   password: "password",
@@ -28,15 +28,18 @@ var con = mysql.createConnection({
   supportBigNumbers : true
 });
 con.connect(function(err) {
-  if (err) throw err;
+  if (err) throw err; // if there is an error throw it
 });
 var bcTypes = [];
-bcTypes.push('tblGoldTrans');
-bcTypes.push('tblGoldTranLog');
+bcTypes.push('tblGoldTrans'); // this is the list of tables that are part of the blockchain
+bcTypes.push('tblGoldTranLog'); // this is the list of tables that are part of the blockchain
 
 function getRandomInt(max) {
+  // """ this function returns a random integer between 0 and max """
   return Math.floor(Math.random() * Math.floor(max));
 }
+
+// this is the main class for the mkyBanker
 class Reg2Transaction{
   constructor(tran,db,sig,bctr){
     this.tran = tran;
@@ -50,68 +53,70 @@ class Reg2Transaction{
   saveTransaction(){
     /* increment block counter and save */
     const gtrnBlockID = 'null'; //this.bctr.nbr;
-    this.bctr.nRec++;
+    this.bctr.nRec++; // increment the number of records in the block
     if (this.bctr.nRec >= this.bctr.maxBlockSize){
-      this.bctr.nRec = 0;
-      this.bctr.nbr++;
+      this.bctr.nRec = 0; // reset the number of records in the block
+      this.bctr.nbr++;  // increment the block number
     }
-    const tran = this.tran;
+    const tran = this.tran; // this is the transaction
     var SQL = "Select count(*)nRec from tblGoldTrans where gtrnSyncKey = '"+tran.syncKey+"'";
-    var db = this.db
+    var db = this.db // this is the database connection
     this.db.query(SQL, function (err, result, fields) {
-      if (err) console.log(err);
+      if (err) console.log(err); // if there is an error, log it
       else {
-        if (result[0].nRec == 0){
+        if (result[0].nRec == 0){ // if the transaction is not already in the database
           SQL = "insert into tblGoldTrans (gtrnAmount,gtrnGoldType,gtrnSource,gtrnSrcID,gtrnTycTax,gtrnTaxHold,gtrnCityID,gtrnGoldRate,gtrnMUID,";
           SQL += "gtrnSyncKey,gtrnSignature,gtrnDate,gtrnQAppm,gtrnBlockID) ";
-          SQL += "values ("+tran.gtlAmount+",'"+tran.gtlGoldType+"','"+tran.gtlSource+"',"+tran.gtlSrcID+",";
-          SQL += tran.gtlTycTax+","+tran.gtlTaxHold+","+tran.gtlCityID+","+tran.gtlGoldRate+",'"+tran.gtlMUID+"',";
-          SQL += "'"+tran.syncKey+"','"+this.sig+"','"+tran.gtlDate+"','"+tran.gtlQApp+"',"+gtrnBlockID+")";
+          SQL += "values ("+tran.gtlAmount+",'"+tran.gtlGoldType+"','"+tran.gtlSource+"',"+tran.gtlSrcID+","; // add the transaction data
+          SQL += tran.gtlTycTax+","+tran.gtlTaxHold+","+tran.gtlCityID+","+tran.gtlGoldRate+",'"+tran.gtlMUID+"',"; // add the transaction data
+          SQL += "'"+tran.syncKey+"','"+this.sig+"','"+tran.gtlDate+"','"+tran.gtlQApp+"',"+gtrnBlockID+")"; // save the transaction
          //console.log('Reg2Trans confirm and save ',tran.gtlGoldType);
-          db.query(SQL, function (err, result, fields) {
-            if (err) console.log(err);
+          db.query(SQL, function (err, result, fields) { // save the transaction
+            if (err) console.log(err); // if there is an error, log it
           });
         }
       }
     });
   }
   getWalletPubKey(){
-    const tran = this.tran;
+    // """ this function returns the public key for the wallet """
+    const tran = this.tran; // this is the transaction
     return new Promise( (resolve,reject)=>{
       const SQL = "select mwalPubKey from tblmkyWallets where mwalMUID = '"+tran.gtlMUID+"'";
-      this.db.query(SQL, function (err, result, fields) {
-        if (err) {console.log(err);resolve(null);}
-        else {
-          if (result.length == 0){
-            resolve(mkyPubKey);
+      this.db.query(SQL, function (err, result, fields) { // get the wallet public key
+        if (err) {console.log(err);resolve(null);}  // if there is an error, log it
+        else {  // if there is no error
+          if (result.length == 0){  // if there is no wallet for this MUID
+            resolve(mkyPubKey); // return the default public key
           }
           else
-            resolve(result[0].mwalPubKey);
+            resolve(result[0].mwalPubKey);  // return the wallet public key
         }
       });
 
     });
   }
   async confirmAndSave() {
-    if (!this.tran.gtlMUID){
+    // """ this function confirms the transaction and saves it """
+    if (!this.tran.gtlMUID){ // if there is no MUID in the transaction
      //console.log('No Wallet MUID in this transaction');
       return;
     }
-    if (!this.sig || this.sig.length === 0) {
+    if (!this.sig || this.sig.length === 0) { // if there is no signature in the transaction
      //console.log ('No signature in this transaction');
       return;
     }
     const wKey = await this.getWalletPubKey();
-    if (!wKey){
+    if (!wKey){ // if there is no public key for the wallet
      //console.log ('Empty Wallet Public Key Found.');
       return;
     }
-    const publicKey = ec.keyFromPublic(wKey, 'hex');
-    if (publicKey.verify(this.calculateHash(), this.sig)){
+    const publicKey = ec.keyFromPublic(wKey, 'hex'); // get the public key
+    if (publicKey.verify(this.calculateHash(), this.sig)){ // if the signature matches the transaction
       //this.saveTransaction();
      //console.log('Tran Reverification good');
     }
-    else {
+    else { // if the signature does not match the transaction
      //console.log('Banker: Trans verification Fail... transaction dropped.');
       //console.log('signature tried',this.sig);
       //console.log('wpubkey',wKey);
@@ -121,30 +126,32 @@ class Reg2Transaction{
 class MkyTransaction {
   constructor(fromWallet,tran,signature,tdate,bctr) {
       if (tran.syncKey == 'NA')
-        tran.syncKey = crypto.createHash('sha256').update(JSON.stringify(tran)).digest('hex'); 
-      
-      this.tran          = tran;
-      this.fromWallet    = fromWallet;
-      this.gtrnGoldType  = tran.gtlGoldType;
-      this.gtrnSource    = tran.gtlSource;
-      this.gtrnSrcID     = tran.gtlSrcID;
-      this.gtrnTycTax    = tran.gtlTycTax;
-      this.gtrnAmount    = tran.gtlAmount;
-      this.gtrnCityID    = tran.gtlCityID;
-      this.gtrnTaxHold   = tran.gtlTaxHold;
-      this.gtrnGoldRate  = tran.gtlGoldRate;
-      this.gtrnSyncKey   = tran.syncKey;
-      this.gtrnQApp      = tran.gtlQApp;
-      this.gtrnMUID      = tran.gtlMUID;
-      this.gtrnSignature = signature;
-      this.gtrnDate      = tdate;
-      this.bctr          = bctr;
+        tran.syncKey = crypto.createHash('sha256').update(JSON.stringify(tran)).digest('hex');
+
+      this.tran          = tran; // this is the transaction
+      this.fromWallet    = fromWallet; // this is the wallet that sent the transaction
+      this.gtrnGoldType  = tran.gtlGoldType; // this is the gold type
+      this.gtrnSource    = tran.gtlSource; // this is the source of the transaction
+      this.gtrnSrcID     = tran.gtlSrcID; // this is the source ID
+      this.gtrnTycTax    = tran.gtlTycTax; // this is the tax code
+      this.gtrnAmount    = tran.gtlAmount;  // this is the amount of gold
+      this.gtrnCityID    = tran.gtlCityID;  // this is the city ID
+      this.gtrnTaxHold   = tran.gtlTaxHold; // this is the tax hold
+      this.gtrnGoldRate  = tran.gtlGoldRate;  // this is the gold rate
+      this.gtrnSyncKey   = tran.syncKey;  // this is the sync key
+      this.gtrnQApp      = tran.gtlQApp;  // this is the QApp
+      this.gtrnMUID      = tran.gtlMUID;  // this is the MUID
+      this.gtrnSignature = signature; // this is the signature of the transaction
+      this.gtrnDate      = tdate; // this is the date of the transaction
+      this.bctr          = bctr;  // this is the block counter
   }
 
   calculateHash() {
+    // """ this function calculates the hash of the transaction """
     return crypto.createHash('sha256').update(JSON.stringify(this.tran)).digest('hex');
   }
   signTransaction(signingKey) {
+    // """ this function signs the transaction """
     if (signingKey.getPublic('hex') !== this.fromWallet) {
       throw new Error('You cannot sign transactions for other wallets!');
     }
@@ -157,6 +164,7 @@ class MkyTransaction {
    //console.log('trans this.signature: '+ this.signature.length + ': ',this.signature);
   }
   testTran(sKey){
+    // """ this function tests the transaction """
     var SQL = "select gtrnDate,gtrnGoldType,gtrnSource,cast(gtrnSrcID as char)gtrnSrcID,cast(gtrnTycTax as char)gtrnTycTax,";
     SQL += "cast(gtrnAmount as char)gtrnAmount,cast(gtrnCityID as char)gtrnCityID,";
     SQL += "cast(gtrnTaxHold as char)gtrnTaxHold,cast(gtrnGoldRate as char)gtrnGoldRate,gtrnSyncKey,gtrnQApp,gtrnMUID,gtrnSignature ";
@@ -165,12 +173,12 @@ class MkyTransaction {
       if (err){
        //console.log('"blockErr":' + JSON.stringify(err)+'}');
       }
-      else {
-        var trans = [];
-        const dbres = Object.keys(result);
-        dbres.forEach(function(key) {
-          var tRec = result[key];
-          trans.push(tRec);
+      else { // if there are no errors
+        var trans = []; // this is the array of transactions
+        const dbres = Object.keys(result); // this is the array of keys
+        dbres.forEach(function(key) { // for each key
+          var tRec = result[key]; // this is the transaction record
+          trans.push(tRec); // add the transaction to the array
         });
         if (trans.length == 0)
           console.log('{"result":"No Transactions To Send Right Now."}',SQL);
@@ -268,21 +276,21 @@ class MkyBank {
     if (this.reset)
       if (this.reset == 'rebuild')
         await this.reBuildDb(this.resetBlock);
-      else 
+      else
         await this.resetDb(this.resetBlock);
 
     this.firstBlock = new MkyBlock();
     this.maxBlockSize = this.firstBlock.maxBlockSize(0,this.maxBlockSize);
-    
+
     for (var btype of bcTypes){
-      const block = await this.checkLastBlockNbr(btype); 
+      const block = await this.checkLastBlockNbr(btype);
       var blockCtr = {
         nbr  : block.nbr +1,
         nRec : block.nRec + 0,
 
       }
       this.blockCtr.push(blockCtr);
-    } 
+    }
     console.log(this.blockCtr);
 
     if (this.reset && this.isRoot){
@@ -338,7 +346,7 @@ class MkyBank {
     for (var bc of this.blockCtr)
      if (bc.type == type);
        return bc;
-  } 
+  }
   resetBlockCtrs(){
     return new Promise( async (resolve,reject)=>{
       this.blockCtr = [];
@@ -392,7 +400,7 @@ class MkyBank {
       var nblocks = await this.chain.getChainHeight(ctype);
       console.log('rebuild nblocks is: ',nblocks);
       var tbl = this.type;
-      
+
       for (var nblock = blockNbr + 1; nblock <= nblocks;nblock++){
         var SQL = "select blockNbr,blockHash,blockPrevHash,blockNOnce,blockTimestamp,blockDifficulty,blockMinerID,blockHashTime,bchaBranchID,";
         SQL += "tranBlockData from mkyBlockC.tblmkyBlocks ";
@@ -417,7 +425,7 @@ class MkyBank {
       SQL += "truncate table mkyBank.tblGoldTranMonthSum; ";
       SQL += "delete from mkyBank.tblGoldTrans        where gtrnBlockID > "+blockNbr+"; ";
       SQL += "delete from mkyBank.tblGoldTranLog      where gtlBlockID > "+blockNbr+"; ";
-      
+
       con.query(SQL, async (err, result, fields)=>{
         if (err) {console.log(err);reject(err);this.status='Rebuild Failed';}
         else {
@@ -460,7 +468,7 @@ class MkyBank {
   }
   handleXhrError(j){
     if (!j.msg)
-      return;    
+      return;
     const msg = j.msg;
     if (msg.req == 'sendStatus'){
       var node = {
@@ -470,7 +478,7 @@ class MkyBank {
       }
       this.group.updateGroup(node);
       return;
-    }   
+    }
   }
   handleReq(res,j){
 
@@ -532,7 +540,7 @@ class MkyBank {
     }
     if (j.req == 'sendBlock'){
       this.sendBlockRes(res,bcTypes[getRandomInt(2)]);
-      return true; 
+      return true;
     }
     return false;
   }
@@ -610,7 +618,7 @@ class MkyBank {
             }
             else
               resolve(false);
-          } 
+          }
         }
       });
     });
@@ -656,7 +664,7 @@ class MkyBank {
               }
             }
           }
-        }   
+        }
       });
     });
   }
@@ -677,7 +685,7 @@ class MkyBank {
     const isWin = await this.checkWinnerStatus(conf,payment.gtlMUID);
     console.log('\n---------------\nwinner status is -->',isWin);
     if (!isWin){
-      return;  
+      return;
     }
     con.query(SQL , async (err, result,fields)=>{
       if (err){
@@ -693,11 +701,11 @@ class MkyBank {
         var transStr = JSON.stringify(trans);
         trans = JSON.parse(transStr);
         console.log('confirming block '+ conf.blockID,trans);
-        var prevHash = await bank.getBlockPreviousHash(conf.blockID -1);        
+        var prevHash = await bank.getBlockPreviousHash(conf.blockID -1);
         var chainId = await bank.getBlockChainId(conf.type);
-        var block = new MkyBlock(conf.timestamp,conf.blockID,trans,prevHash,null,conf.branchId,conf.type,chainId);    
+        var block = new MkyBlock(conf.timestamp,conf.blockID,trans,prevHash,null,conf.branchId,conf.type,chainId);
         var minerID = 0;
-     
+
         if (block.checkSolution(conf.diff,conf.nonce,conf.timestamp,conf.hash)){
           conf.chainId = chainId;
           var sres = await bank.storeBlockChainRec(conf,transStr,prevHash,minerID);
@@ -708,8 +716,8 @@ class MkyBank {
             const nQued = await this.getNQTransactions();
             this.maxBlockSize = this.firstBlock.maxBlockSize(nQued,this.maxBlockSize);
             bank.makeMinerPayment(conf,payment);
-          } 
-          else 
+          }
+          else
             console.log('data error saving to database');
         }
         else {
@@ -720,10 +728,10 @@ class MkyBank {
   }
   getNQTransactions(){
     return new Promise( (resolve,reject)=>{
-      var SQL =  "select count(*)nRec from tblGoldTrans where gtrnBlockID is null "; 
+      var SQL =  "select count(*)nRec from tblGoldTrans where gtrnBlockID is null ";
       con.query(SQL , (err, result,fields)=>{
         if (err){console.log(err); resolve(0); }
-        else 
+        else
           resolve(result[0].nRec);
       });
     });
@@ -742,8 +750,8 @@ class MkyBank {
             this.blockRemainingTransaction(nextBlockID+1);
           });
         }
-      }  
-    });          
+      }
+    });
   }
   markConfirmedTrans(confKey,key,bc,blockID){
     return new Promise( (resolve,reject)=>{
@@ -756,15 +764,15 @@ class MkyBank {
           SQL += "order by gtrnDate desc,gtrnSyncKey desc limit "+this.maxBlockSize;
           con.query(SQL, async (err, result, fields)=>{
             if (err) {console.log(err); resolve(false);}
-            bc.nbr++; 
-            bc.nRec = 0;             
+            bc.nbr++;
+            bc.nRec = 0;
             //console.log('bc is now',this.blockCtr);
             //this.blockRemainingTransaction(nextBlockID);
             resolve(true);
           });
-        }     
-      }); 
-    }); 
+        }
+      });
+    });
   }
   reBlockTransactions(conf){
     return new Promise( async (resolve,reject)=>{
@@ -802,7 +810,7 @@ class MkyBank {
             var rec = result[0];
             resolve(rec.blockHash);
           }
-          else 
+          else
             resolve('Genissis Block');
         }
       });
@@ -821,7 +829,7 @@ class MkyBank {
       //console.log('response to banker node: ',req.blistInfo);
       this.net.sendMsg(to,req);
     }
-  } 
+  }
   bufferTransactions(j,to){
      const req = {
        msg : j,
@@ -834,7 +842,7 @@ class MkyBank {
 
     for (var j of this.tranBuffer){
       this.procBranchReq(j.msg,j.to);
-      console.log('Flushing Transaction Buffer',j); 
+      console.log('Flushing Transaction Buffer',j);
     }
     this.tranBuffer = [];
   }
@@ -879,7 +887,7 @@ class MkyBank {
         else {
           var bal = 0.0;
           Object.keys(result).forEach(function(key) {
-            var row = result[key]; 
+            var row = result[key];
             bal = bal + row.amt;
           });
           this.net.endRes(res,'{"bankBalance":' + bal + '}');
@@ -906,7 +914,7 @@ class MkyBank {
             else {
               let SQL = "select mwalID from tblmkyWallets where mwalMUID = '"+ wMUID +"'";
               con.query(SQL, function (err, result, fields) {
-                if (err) 
+                if (err)
                   net.sendMsg(to,{bankResult:{newWallet:null,error:"database failed: "+SQL}});
                 else {
                   net.sendMsg(to,{bankResult:{newWallet: result[0].mwalID }});
@@ -953,7 +961,7 @@ class MkyBank {
     console.log('got sendMissingTrans',keys);
     this.net.endRes(res,'{"missingTrans":[]}');
     return;
-    /*********************************** 
+    /***********************************
       NEEDS To Be Writen ***************
     ************************************
     */
@@ -1042,7 +1050,7 @@ class MkyBank {
        SQL += " from mkyBlockC.tblmkyBlocks ";
        SQL += "inner join mkyBlockC.tblmkyBlockChain on blockChainID = bchaID ";
        SQL += "inner join mkyBlockC.tblmkyBlockTrans on tranBlockChainID = blockChainID and tranBlockID = blockNbr ";
-       SQL += "where bchaSrcTable = '"+type+"' and blockNbr = "+blockNbr;  
+       SQL += "where bchaSrcTable = '"+type+"' and blockNbr = "+blockNbr;
        con.query(SQL , (err, result,fields)=>{
          if (err){
            this.net.endRes(res,'"blockErr":' + JSON.stringify(err)+'}');
@@ -1060,7 +1068,7 @@ class MkyBank {
            }
            else {
              const tRec = result[0];
-             
+
              var myResponse = {
                bInfo : {
                  blockNbr   : blockNbr,
@@ -1078,7 +1086,7 @@ class MkyBank {
                  hashTime   : tRec.blockHashTime
                }
              }
-             console.log('sending block ',blockNbr); 
+             console.log('sending block ',blockNbr);
              this.net.endRes(res,JSON.stringify(myResponse));
            }
          }
@@ -1091,7 +1099,7 @@ class MkyBank {
     if (!nb){
       this.net.endRes(res,'{"result":"No Blocks To Mine Right Now."}');
       return;
-    } 
+    }
     const SQL = this.buildBlockSQL(nb.number,type);
     con.query(SQL , (err, result,fields)=>{
       if (err){
@@ -1157,7 +1165,7 @@ class MkyBank {
             });
           }
           else {
-           //console.log('Block Already Exists'); 
+           //console.log('Block Already Exists');
             resolve(false);
           }
         }
@@ -1179,7 +1187,7 @@ class MkyBank {
               else {
                 resolve(true);
               }
-            }); 
+            });
           }
           else {
             SQL  = "update mkyBlockC.tblmkyBlockTrans set tranBlockData = '"+addslashes(transactions)+"'";
@@ -1191,7 +1199,7 @@ class MkyBank {
           }
         }
       });
-    }); 
+    });
   }
   checkLastBlockNbr(type){
     return new Promise( (resolve,reject)=>{
@@ -1222,10 +1230,10 @@ class MkyBank {
     });
   }
   buildBlockSQL(blockId,type,confKey=null){
-    var searchA = ''; 
+    var searchA = '';
     var searchB = '';
     if (confKey){
-      searchA = " and concat(gtrnDate,gtrnSyncKey) >= '"+confKey.start+"' and concat(gtrnDate,gtrnSyncKey) <=  '"+confKey.end+"' ";    
+      searchA = " and concat(gtrnDate,gtrnSyncKey) >= '"+confKey.start+"' and concat(gtrnDate,gtrnSyncKey) <=  '"+confKey.end+"' ";
       searchB = " and concat(gtlDate,syncKey) >= '"+confKey.start+"' and concat(gtlDate,syncKey) <=  '"+confKey.end+"' ";
     }
     var SQL = null;
@@ -1259,13 +1267,13 @@ class MkyBank {
       con.query(SQL, function (err, result, fields) {
         if (err) {console.log(err);resolve(null);}
         else {
-          if (result.length  > 0) 
+          if (result.length  > 0)
             resolve (result[0].bchaID);
           else
             resolve (null);
         }
       });
-    });  
+    });
   }
   getNewBlockNbr(mySrc){
     var bank = this;
@@ -1284,7 +1292,7 @@ class MkyBank {
               difficulty : rec.bchaDifficulty + 0,
               chainId    : rec.bchaID,
               number     : null,
-              prevHash   : 'Genissis Block', 
+              prevHash   : 'Genissis Block',
               branchId   : bank.branchId,
               type       : oSrc,
               goldRate   : rate
@@ -1340,15 +1348,15 @@ class MkyBank {
     });
   }
   //*****************************************************************
-  // Rotate Days Transactions to the log 
+  // Rotate Days Transactions to the log
   //=================================================================
   rotateTransLog(iDay){
     if (this.logsRotating)
       return;
     this.logsRotating = true;
     console.log("Start Main");
-    const bank = this;   
-    
+    const bank = this;
+
     let SQL = "select count(*)nRec from tblGoldTranLog where DATE(gtlDate) = DATE(NOW() - INTERVAL "+iDay+" DAY)";
     con.query(SQL, (err, result, fields)=>{
       if (err){this.logsRotating = false;console.log(err);}
@@ -1487,4 +1495,3 @@ function sleep(ms){
 
 module.exports.MkyTransaction = MkyTransaction;
 module.exports.MkyBank  = MkyBank;
-

@@ -3,6 +3,11 @@ BitMonky Web Moniter Tool
 ****************************
 */
 
+// This code defines a JavaScript class called MkyDbMonitor that appears to be used to monitor a database and send reports to a user. The MkyDbMonitor class takes two arguments in its constructor, db and bank, which are likely references to the MySQL database and some other object, respectively.
+
+// The MkyDbMonitor class has several methods, including handleReq(), sendReport(), sendGoldTranLog(), sendBlocks(), sendWallets(), getLastBlockNumber(), getDbTime(), and getBChainInfo().
+
+// The handleReq() method is called with two arguments, j and res, and appears to check the value of the req and what properties of the j object. Based on the values of these properties, the method calls one of the other methods of the MkyDbMonitor class and returns the result to the user by calling the end() method on the res object.
 class MkyDbMonitor {
   constructor(db,bank){
     this.db = db;
@@ -31,7 +36,7 @@ class MkyDbMonitor {
         res.end(report);
         return true;
       }
-    } 
+    }
     return false
   }
   sendReport(){
