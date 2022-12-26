@@ -1,3 +1,13 @@
+// This code is written in JavaScript and uses the MySQL module to connect to a MySQL database.
+
+// The code first creates a connection to the MySQL database using the mysql.createConnection() function, which takes an object containing the host, user, password, and database for the MySQL server as its argument. The dateStrings property is also included in this object, but it is not clear what its purpose is.
+
+// The con.connect() function is then used to establish the connection to the database, and an error is thrown if the connection fails.
+
+// The code then defines a function called main(), which contains a series of MySQL queries that are executed on the database. The main() function is called repeatedly in a loop by the go() function, which uses the sleep() function to pause the loop for a certain amount of time before calling main() again.
+
+// The main() function starts by executing a SELECT query that counts the number of rows in the tblGoldTranLog table where the date of the row is equal to the current date minus a certain number of days, specified by the iDay variable. If the count is 0, the code executes another SELECT query to count the number of rows in the tblGoldTrans table where the date is also equal to the current date minus a certain number of days. If this count is greater than 0, the code executes a series of queries to insert the rows from the tblGoldTrans table into the tblGoldTranLog table, delete the rows from the tblGoldTrans table, and then call the doDaySum() function. If the count of rows in the tblGoldTrans table is not greater than 0, the code executes a query to delete any rows in the tblGoldTrans table that have the specified date, and then calls the doDaySum() function.
+
 const mysql = require('mysql');
 
 var con = mysql.createConnection({
@@ -130,7 +140,7 @@ function doMonthSum(){
         SQL += ",avg(gtlGoldRate),gtlMUID ";
         SQL += "FROM tblGoldTranLog ";
         SQL += "where month(gtlDate) = month(NOW() - INTERVAL 1 MONTH) ";
-        SQL += "and year(gtlDate) = year(NOW() - INTERVAL 1 MONTH) "; 
+        SQL += "and year(gtlDate) = year(NOW() - INTERVAL 1 MONTH) ";
         SQL += "group by gtlMUID,gtlGoldType,gtlSource,gtlSrcID";
         con.query(SQL, function (err, result, fields) {
           if (err)console.log(err);
@@ -142,7 +152,7 @@ function doMonthSum(){
 }
 function setTransBlockNumbers(maxBRecs){
    return new Promise( (resolve,reject)=>{
-     var prom = this;   
+     var prom = this;
      console.log( "\n *** check tblGoldTrans for null block records on db: ");
     //console.log(maxBRecs);
      SQL  = "select count(*)nRec from tblGoldTrans ";
@@ -172,7 +182,7 @@ function setTransBlockNumbers(maxBRecs){
                  await updateBlock(1,maxBRecs);
                  resolve(0);
                }
-             } 
+             }
            });
          }
        }
@@ -197,4 +207,3 @@ function updateBlock(id,limit){
      });
    });
 }
-
